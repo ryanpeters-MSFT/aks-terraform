@@ -32,6 +32,23 @@ variable "vmSize" {
   default = "Standard_D2s_v5"
 }
 
+variable "userVmProfiles" {
+  type = list(object({
+    count = number
+    size  = string
+  }))
+  default = [
+    {
+      count = 2
+      size  = "Standard_D2s_v5"
+    },
+    {
+      count = 1
+      size  = "Standard_D4s_v5"
+    }
+  ]
+}
+
 variable "vnetCidr" {
   type    = string
   default = "10.0.0.0/16"

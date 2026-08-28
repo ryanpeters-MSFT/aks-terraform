@@ -125,7 +125,9 @@ resource "azurerm_kubernetes_cluster_node_pool" "uservmss" {
   name                  = "uservmss"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.main.id
   vm_size               = var.vmSize
-  node_count            = 2
+  auto_scaling_enabled  = true
+  min_count             = 2
+  max_count             = 6
   mode                  = "User"
   os_sku                = "AzureLinux3"
   orchestrator_version  = var.kubernetesVersion
@@ -148,10 +150,7 @@ resource "azapi_resource" "uservms" {
       vnetSubnetID        = azurerm_subnet.nodes.id
       virtualMachinesProfile = {
         scale = {
-          manual = [{
-            count = 2
-            size  = var.vmSize
-          }]
+          manual = var.userVmProfiles
         }
       }
     }
