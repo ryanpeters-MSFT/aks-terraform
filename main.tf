@@ -81,12 +81,14 @@ resource "azurerm_kubernetes_cluster" "main" {
   private_dns_zone_id                 = "System"
 
   default_node_pool {
-    name                 = "system"
-    node_count           = var.nodeCount
-    vm_size              = var.vmSize
-    os_sku               = "AzureLinux3"
-    orchestrator_version = var.kubernetesVersion
-    vnet_subnet_id       = azurerm_subnet.nodes.id
+    name                         = "system"
+    node_count                   = var.nodeCount
+    vm_size                      = var.vmSize
+    os_sku                       = "AzureLinux3"
+    orchestrator_version         = var.kubernetesVersion
+    vnet_subnet_id               = azurerm_subnet.nodes.id
+    only_critical_addons_enabled = true
+    temporary_name_for_rotation  = "systemtemp"
   }
 
   node_provisioning_profile {
@@ -128,6 +130,7 @@ resource "azurerm_kubernetes_cluster_node_pool" "uservmss" {
   os_sku                = "AzureLinux3"
   orchestrator_version  = var.kubernetesVersion
   vnet_subnet_id        = azurerm_subnet.nodes.id
+  node_taints           = ["workload=apps:NoSchedule"]
 }
 
 resource "azapi_resource" "uservms" {
