@@ -14,7 +14,7 @@ variable "location" {
 
 variable "clusterName" {
   type    = string
-  default = "aksterraformwssc"
+  default = "aksterraformsuggested"
 }
 
 variable "kubernetesVersion" {

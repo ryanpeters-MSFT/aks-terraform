@@ -1,6 +1,6 @@
 # AKS Terraform
 
-Provisions private cluster `aksterraformwssc` in `centralus` with Azure CNI Overlay, API server VNet integration, VMSS and Virtual Machines user pools, and Azure Bastion. Terraform state is stored locally.
+Provisions private cluster `aksterraformsuggested` in `centralus` with Azure CNI Overlay, API server VNet integration, VMSS and Virtual Machines user pools, and Azure Bastion. Terraform state is stored locally.
 
 ```powershell
 .\setup.ps1
