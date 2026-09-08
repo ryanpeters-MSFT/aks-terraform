@@ -37,6 +37,7 @@ variable "vmSize" {
 }
 
 variable "userVmProfiles" {
+  description = "Node counts and VM sizes for the optional Virtual Machines agent pool in main.tf."
   type = list(object({
     count = number
     size  = string

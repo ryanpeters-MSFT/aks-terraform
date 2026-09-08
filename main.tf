@@ -178,7 +178,7 @@ resource "azurerm_federated_identity_credential" "workloaduser" {
   audience                  = ["api://AzureADTokenExchange"]
 }
 
-# create VMSS and Virtual Machines user pools
+# create VMSS user pool
 resource "azurerm_kubernetes_cluster_node_pool" "appspool" {
   name                  = "appspool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.main.id
@@ -198,6 +198,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "appspool" {
   }
 }
 
+# optional: uncomment to create a heterogeneous Virtual Machines agent pool
+/*
 resource "azapi_resource" "uservms" {
   type      = "Microsoft.ContainerService/managedClusters/agentPools@2025-10-01"
   name      = "uservms"
@@ -224,6 +226,7 @@ resource "azapi_resource" "uservms" {
     }
   }
 }
+*/
 
 # create Bastion for direct private AKS access
 resource "azurerm_public_ip" "bastion" {

@@ -1,6 +1,8 @@
-# Private AKS with Terraform
+# Baseline-Informed Private AKS with Terraform
 
-This repository provisions a private Azure Kubernetes Service (AKS) cluster and a sample workload. The default values create `aksterraformsuggested` in `centralus`. Terraform state and saved plans are stored locally.
+This repository provides an opinionated, baseline-informed Terraform foundation for private Azure Kubernetes Service (AKS). It adopts Microsoft-recommended cluster identity, networking, availability-zone, workload-isolation, and managed Gateway API patterns, but it is not a complete implementation of the Microsoft AKS baseline architecture or a production-ready landing zone.
+
+The repository provisions the AKS foundation and a sample workload. The default values create `aksterraformsuggested` in `centralus`. Terraform state and saved plans are stored locally.
 
 ## Architecture
 
@@ -13,7 +15,7 @@ The Terraform configuration creates:
 - The managed Kubernetes Gateway API with the App Routing Istio implementation.
 - No managed NGINX ingress controller; Istio and Envoy provide ingress for Gateways that use the `approuting-istio` GatewayClass.
 - A zone-spanning system node pool and an autoscaling, zone-spanning `appspool` VMSS user pool.
-- A heterogeneous `VirtualMachines` user pool based on `userVmProfiles`.
+- An optional, disabled-by-default heterogeneous `VirtualMachines` user pool example based on `userVmProfiles`.
 - Azure Bastion Standard with native-client tunneling for access to the private API server.
 - A user-assigned managed identity and federated credential for the sample Kubernetes service account.
 
@@ -62,6 +64,12 @@ az account set --subscription <SUBSCRIPTION_ID>
 If you override `group` or `clusterName`, update the matching values in `connect.ps1`, which currently uses the repository defaults.
 
 The configuration uses local Terraform state. Protect `terraform.tfstate`, backup state, and saved plan files because they can contain sensitive infrastructure data. Do not edit state files manually.
+
+### Optional Virtual Machines agent pool
+
+The `azapi_resource.uservms` block in `main.tf` is commented out by default. To create an AKS agent pool that uses the `VirtualMachines` type instead of VMSS, uncomment the complete block and customize `userVmProfiles` in `variables.tf`. Each profile specifies a VM size and node count for the heterogeneous pool.
+
+Always review the Terraform plan after enabling or disabling this block. If the pool is already tracked in Terraform state, commenting out the block schedules that existing agent pool for destruction on the next apply.
 
 ## Connect to the private cluster
 
