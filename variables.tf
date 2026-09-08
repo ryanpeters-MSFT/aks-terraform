@@ -2,6 +2,10 @@ variable "subscriptionId" {
   type = string
 }
 
+variable "tenantId" {
+  type = string
+}
+
 variable "group" {
   type    = string
   default = "rg-aks-terraform"
@@ -47,6 +51,11 @@ variable "userVmProfiles" {
       size  = "Standard_D4s_v5"
     }
   ]
+}
+
+variable "workloadNamespace" {
+  type    = string
+  default = "default"
 }
 
 variable "vnetCidr" {

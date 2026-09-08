@@ -79,6 +79,10 @@ resource "azurerm_kubernetes_cluster" "main" {
   private_cluster_enabled             = true
   private_cluster_public_fqdn_enabled = false
   private_dns_zone_id                 = "System"
+  oidc_issuer_enabled                 = true
+  workload_identity_enabled           = true
+  role_based_access_control_enabled   = true
+  local_account_disabled              = true
 
   default_node_pool {
     name                         = "system"
@@ -89,6 +93,11 @@ resource "azurerm_kubernetes_cluster" "main" {
     vnet_subnet_id               = azurerm_subnet.nodes.id
     only_critical_addons_enabled = true
     temporary_name_for_rotation  = "systemtemp"
+    zones                        = ["1", "2", "3"]
+
+    upgrade_settings {
+      max_surge = "10%"
+    }
   }
 
   node_provisioning_profile {
@@ -100,6 +109,11 @@ resource "azurerm_kubernetes_cluster" "main" {
     identity_ids = [azurerm_user_assigned_identity.aks.id]
   }
 
+  azure_active_directory_role_based_access_control {
+    azure_rbac_enabled = true
+    tenant_id          = var.tenantId
+  }
+
   api_server_access_profile {
     subnet_id                           = azurerm_subnet.apiServer.id
     virtual_network_integration_enabled = true
@@ -108,6 +122,8 @@ resource "azurerm_kubernetes_cluster" "main" {
   network_profile {
     network_plugin      = "azure"
     network_plugin_mode = "overlay"
+    network_data_plane  = "cilium"
+    network_policy      = "cilium"
     pod_cidr            = var.podCidr
     service_cidr        = var.serviceCidr
     dns_service_ip      = var.dnsServiceIp
@@ -120,9 +136,51 @@ resource "azurerm_kubernetes_cluster" "main" {
   ]
 }
 
+# enable managed Gateway API with only the App Routing Istio implementation
+resource "azapi_update_resource" "gatewayApi" {
+  type        = "Microsoft.ContainerService/managedClusters@2026-04-01"
+  resource_id = azurerm_kubernetes_cluster.main.id
+
+  body = {
+    properties = {
+      ingressProfile = {
+        gatewayAPI = {
+          installation = "Standard"
+        }
+        webAppRouting = {
+          enabled = true
+          nginx = {
+            defaultIngressControllerType = "None"
+          }
+          gatewayAPIImplementations = {
+            appRoutingIstio = {
+              mode = "Enabled"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# create the generic workload identity and trust its Kubernetes service account
+resource "azurerm_user_assigned_identity" "workloaduser" {
+  name                = "workloaduser"
+  location            = azurerm_resource_group.rg_aks.location
+  resource_group_name = azurerm_resource_group.rg_aks.name
+}
+
+resource "azurerm_federated_identity_credential" "workloaduser" {
+  name                      = "workloaduser"
+  user_assigned_identity_id = azurerm_user_assigned_identity.workloaduser.id
+  issuer                    = azurerm_kubernetes_cluster.main.oidc_issuer_url
+  subject                   = "system:serviceaccount:${var.workloadNamespace}:workloaduser"
+  audience                  = ["api://AzureADTokenExchange"]
+}
+
 # create VMSS and Virtual Machines user pools
-resource "azurerm_kubernetes_cluster_node_pool" "uservmss" {
-  name                  = "uservmss"
+resource "azurerm_kubernetes_cluster_node_pool" "appspool" {
+  name                  = "appspool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.main.id
   vm_size               = var.vmSize
   auto_scaling_enabled  = true
@@ -133,6 +191,11 @@ resource "azurerm_kubernetes_cluster_node_pool" "uservmss" {
   orchestrator_version  = var.kubernetesVersion
   vnet_subnet_id        = azurerm_subnet.nodes.id
   node_taints           = ["workload=apps:NoSchedule"]
+  zones                 = ["1", "2", "3"]
+
+  upgrade_settings {
+    max_surge = "10%"
+  }
 }
 
 resource "azapi_resource" "uservms" {
@@ -150,7 +213,12 @@ resource "azapi_resource" "uservms" {
       vnetSubnetID        = azurerm_subnet.nodes.id
       virtualMachinesProfile = {
         scale = {
-          manual = var.userVmProfiles
+          manual = [
+            for profile in var.userVmProfiles : {
+              count = profile.count
+              size  = profile.size
+            }
+          ]
         }
       }
     }
@@ -190,4 +258,8 @@ output "cluster_version" {
 
 output "bastion_id" {
   value = azurerm_bastion_host.main.id
+}
+
+output "workload_identity_client_id" {
+  value = azurerm_user_assigned_identity.workloaduser.client_id
 }
