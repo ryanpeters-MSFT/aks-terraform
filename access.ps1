@@ -1,6 +1,6 @@
 # grant the current Azure user cluster-admin access
 $group = "rg-aks-terraform"
-$cluster = "aksterraformsuggested"
+$cluster = "aksterraform"
 
 $env:TF_VAR_subscriptionId = az account show --query id -o tsv
 $env:TF_VAR_tenantId = az account show --query tenantId -o tsv

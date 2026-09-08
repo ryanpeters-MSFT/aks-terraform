@@ -2,7 +2,7 @@
 
 This repository provides an opinionated, baseline-informed Terraform foundation for private Azure Kubernetes Service (AKS). It adopts Microsoft-recommended cluster identity, networking, availability-zone, workload-isolation, and managed Gateway API patterns, but it is not a complete implementation of the Microsoft AKS baseline architecture or a production-ready landing zone.
 
-The repository provisions the AKS foundation and a sample workload. The default values create `aksterraformsuggested` in `centralus`. Terraform state and saved plans are stored locally.
+The repository provisions the AKS foundation and a sample workload. The default values create `aksterraform` in `centralus`. Terraform state and saved plans are stored locally.
 
 ## Architecture
 
@@ -144,7 +144,7 @@ Check the Azure-side configuration:
 ```powershell
 az aks show `
 	-g rg-aks-terraform `
-	-n aksterraformsuggested `
+	-n aksterraform `
 	--query '{state:provisioningState,dataPlane:networkProfile.networkDataplane,policy:networkProfile.networkPolicy,ingress:ingressProfile}'
 ```
 

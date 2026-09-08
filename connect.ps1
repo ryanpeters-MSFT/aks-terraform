@@ -1,6 +1,6 @@
 # connect directly to the private AKS cluster through Bastion
 $group = "rg-aks-terraform"
-$cluster = "aksterraformsuggested"
+$cluster = "aksterraform"
 $bastionId = terraform output -raw bastion_id
 
 Write-Host "Opening a child PowerShell with the tunnel kubeconfig. Run kubectl there; exit closes the tunnel."
